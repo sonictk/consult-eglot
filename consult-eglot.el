@@ -223,25 +223,30 @@ rely on regexp matching to extract the relevent file and column fields."
              (or (project-root (eglot--project (car servers)))
                  default-directory)))
       (progn
-        (consult--read
-         (thread-first
-           (consult--async-sink)
-           (consult--async-refresh-immediate)
-           (consult--async-map #'consult-eglot--transformer)
-           (consult-eglot--make-async-source servers)
-           (consult--async-throttle)
-           (consult--async-split))
-         :require-match t
-         :prompt "LSP Symbols: "
-         :sort (not consult-eglot-sort-results)
-         :initial (consult--async-split-initial nil)
-         :history '(:input consult-eglot--history)
-         :category 'consult-eglot-symbols
-         :lookup #'consult--lookup-candidate
-         :group (consult--type-group consult-eglot-narrow)
-         :narrow (consult--type-narrow consult-eglot-narrow)
-         :state (consult-eglot--state))
-        (run-hooks 'consult-after-jump-hook))
+        (let ((initial-input
+               (if (use-region-p)
+                   (concat "#"
+                           (buffer-substring-no-properties (region-beginning) (region-end)))
+                 (consult--async-split-initial nil))))
+          (consult--read
+           (thread-first
+             (consult--async-sink)
+             (consult--async-refresh-immediate)
+             (consult--async-map #'consult-eglot--transformer)
+             (consult-eglot--make-async-source servers)
+             (consult--async-throttle)
+             (consult--async-split))
+           :require-match t
+           :prompt "LSP Symbols: "
+           :sort (not consult-eglot-sort-results)
+           :initial initial-input
+           :history '(:input consult-eglot--history)
+           :category 'consult-eglot-symbols
+           :lookup #'consult--lookup-candidate
+           :group (consult--type-group consult-eglot-narrow)
+           :narrow (consult--type-narrow consult-eglot-narrow)
+           :state (consult-eglot--state))
+          (run-hooks 'consult-after-jump-hook)))
     (user-error "No server supporting symbol search")))
 
 (provide 'consult-eglot)
