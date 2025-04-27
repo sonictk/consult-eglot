@@ -248,7 +248,10 @@ rely on regexp matching to extract the relevent file and column fields."
          :require-match t
          :prompt "LSP Symbols: "
          :sort (not consult-eglot-sort-results)
-         :initial nil
+         :initial (if (use-region-p)
+                      (buffer-substring-no-properties
+                       (region-beginning) (region-end))
+                    "#")
          :history '(:input consult-eglot--history)
          :category 'consult-eglot-symbols
          :lookup #'consult--lookup-candidate
